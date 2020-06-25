@@ -4,10 +4,10 @@
 #
 # To overwrite the build args use:
 #  docker build ... --build-arg UBUNTU_DATE=20171006
-ARG UBUNTU_FLAVOR=xenial
-ARG UBUNTU_DATE=20190904
+ARG UBUNTU_FLAVOR=focal
+ARG UBUNTU_DATE=20200606
 
-#== Ubuntu xenial is 16.04, i.e. FROM ubuntu:16.04
+#== Ubuntu Focal is 20.04, i.e. FROM ubuntu:20.04
 # Find latest images at https://hub.docker.com/r/library/ubuntu/
 FROM ubuntu:${UBUNTU_FLAVOR}-${UBUNTU_DATE}
 
@@ -68,8 +68,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 #   The non-interactive network downloader
 # curl
 #   transfer URL data using various Internet protocols
-RUN apt -qqy update \
-  && apt -qqy install \
+RUN apt-get -qqy update \
+  && apt-get -qqy install \
     libltdl7 \
     netcat-openbsd \
     pwgen \
@@ -89,9 +89,9 @@ RUN apt -qqy update \
     pulseaudio \
     socat \
     alsa-utils \
-  && apt -qyy autoremove \
+  && apt-get -qyy autoremove \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 #==============================
 # Locale and encoding settings
@@ -103,16 +103,16 @@ ENV LANG_WHERE US
 ENV ENCODING UTF-8
 ENV LANGUAGE ${LANG_WHICH}_${LANG_WHERE}.${ENCODING}
 ENV LANG ${LANGUAGE}
-RUN apt -qqy update \
-  && apt -qqy --no-install-recommends install \
+RUN apt-get -qqy update \
+  && apt-get -qqy --no-install-recommends install \
     language-pack-en \
     tzdata \
     locales \
   && locale-gen ${LANGUAGE} \
   && dpkg-reconfigure --frontend noninteractive locales \
-  && apt -qyy autoremove \
+  && apt-get -qyy autoremove \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 #===================
 # Timezone settings
@@ -150,14 +150,14 @@ RUN useradd seluser \
 # Regarding urandom see
 #  http://stackoverflow.com/q/26021181/511069
 #  https://github.com/SeleniumHQ/docker-selenium/issues/14#issuecomment-67414070
-RUN apt -qqy update \
-  && apt -qqy install \
+RUN apt-get -qqy update \
+  && apt-get -qqy install \
     openjdk-8-jre-headless \
   && sed -i '/securerandom.source=/ s|/dev/u?random|/dev/./urandom|g' \
        /etc/java-*/security/java.security \
-  && apt -qyy autoremove \
+  && apt-get -qyy autoremove \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 #===================================================
 # Run the following commands as non-privileged user
@@ -199,17 +199,17 @@ USER root
 #=========================================================
 # Python2 for Supervisor, selenium tests, and other stuff
 #=========================================================
-# RUN apt -qqy update \
-#   && apt -qqy --no-install-recommends install \
+# RUN apt-get -qqy update \
+#   && apt-get -qqy --no-install-recommends install \
 #     python2.7 \
 #     python-pip \
 #     python-openssl \
 #     libssl-dev \
 #     libffi-dev \
-#   && pip install --upgrade pip==9.0.3 \
+#   && pip install --upgrade pip==20.1.1 \
 #   && pip install --upgrade setuptools \
 #   && rm -rf /var/lib/apt/lists/* \
-#   && apt -qyy clean
+#   && apt-get -qyy clean
 
 #=========================================================
 # Python3 for Supervisor, selenium tests, and other stuff
@@ -218,19 +218,19 @@ USER root
 #  NameError: name 'file' is not defined
 # After install, make some useful symlinks that are expected to exist
 COPY test/requirements.txt /test/
-RUN apt -qqy update \
-  && apt -qqy --no-install-recommends install \
+RUN apt-get -qqy update \
+  && apt-get -qqy --no-install-recommends install \
     python3 \
     python3-pip \
     python3-dev \
     python3-openssl \
     libssl-dev libffi-dev \
-  && pip3 install --no-cache --upgrade pip==9.0.3 \
+  && pip3 install --no-cache --upgrade pip==20.1.1 \
   && pip3 install --no-cache setuptools \
   && pip3 install --no-cache numpy \
   && pip3 install --no-cache --requirement /test/requirements.txt \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 RUN cd /usr/local/bin \
   && { [ -e easy_install ] || ln -s easy_install-* easy_install; } \
   && ln -s idle3 idle \
@@ -244,25 +244,26 @@ RUN cd /usr/local/bin \
 #====================
 # Supervisor install
 #====================
-# TODO: Upgrade to supervisor stable 4.0 as soon as is released
+# TODO: Upgrade to supervisor next stable version as soon as it is released
 # Check every now and then if version 4 is finally the stable one
 #  https://pypi.python.org/pypi/supervisor
 #  https://github.com/Supervisor/supervisor
-# RUN apt -qqy update \
-#   && apt -qqy install \
+# RUN apt-get -qqy update \
+#   && apt-get -qqy install \
 #     supervisor \
+# 2020-04-30 commit: f41b0ced5e6671, supervisor/version.txt: 4.2.0
 # 2018-09-28 commit: 837c159ae51f3b, supervisor/version.txt: 4.0.0.dev0
 # 2018-06-01 commit: ec495be4e28c69, supervisor/version.txt: 4.0.0.dev0
 # 2017-10-21 commit: 3f04badc3237f0, supervisor/version.txt: 4.0.0.dev0
 # 2017-05-30 commit: 946d9cf3be4db3, supervisor/version.txt: 4.0.0.dev0
 ENV RUN_DIR="/var/run/sele"
-RUN SHA="837c159ae51f3bf12c1d30a8cb44f3450611983c" \
+RUN SHA="f41b0ced5e667107ec17800daaceededbcae27a7" \
   && pip install --no-cache \
       "https://github.com/Supervisor/supervisor/zipball/${SHA}" || \
      pip install --no-cache \
       "https://github.com/Supervisor/supervisor/zipball/${SHA}" \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 #================
 # Font libraries
@@ -274,8 +275,8 @@ RUN SHA="837c159ae51f3bf12c1d30a8cb44f3450611983c" \
 # xfonts-75dpi
 # Regarding fonts-liberation see:
 #  https://github.com/SeleniumHQ/docker-selenium/issues/383#issuecomment-278367069
-RUN apt -qqy update \
-  && apt -qqy --no-install-recommends install \
+RUN apt-get -qqy update \
+  && apt-get -qqy --no-install-recommends install \
     libfontconfig \
     libfreetype6 \
     xfonts-cyrillic \
@@ -285,30 +286,30 @@ RUN apt -qqy update \
     fonts-wqy-zenhei \
     ttf-ubuntu-font-family \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 #=========
 # Openbox
 # A lightweight window manager using freedesktop standards
 #=========
 # Let's disable this as is only filling disk space
-# RUN apt -qqy update \
-#   && apt -qqy --no-install-recommends install \
+# RUN apt-get -qqy update \
+#   && apt-get -qqy --no-install-recommends install \
 #     openbox obconf menu \
 #   && rm -rf /var/lib/apt/lists/* \
-#   && apt -qyy clean
+#   && apt-get -qyy clean
 
 #=========
 # fluxbox
 # A fast, lightweight and responsive window manager
 #=========
 # xfce4-notifyd allows `notify-send` notifications
-RUN apt -qqy update \
-  && apt -qqy install \
+RUN apt-get -qqy update \
+  && apt-get -qqy install \
     fluxbox \
     xfce4-notifyd \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 #============================
 # Xvfb X virtual framebuffer
@@ -316,21 +317,21 @@ RUN apt -qqy update \
 # xvfb: Xvfb or X virtual framebuffer is a display server
 #  + implements the X11 display server protocol
 #  + performs all graphical operations in memory
-RUN apt -qqy update \
-  && apt -qqy --no-install-recommends install \
+RUN apt-get -qqy update \
+  && apt-get -qqy --no-install-recommends install \
     xvfb \
     xorg \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 #============
 # VNC Server
 #============
-RUN apt -qqy update \
-  && apt -qqy install \
+RUN apt-get -qqy update \
+  && apt-get -qqy install \
     x11vnc \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 #===================================================
 # Run the following commands as non-privileged user
@@ -370,11 +371,11 @@ USER root
 #   for mp4 & html5 video browser support: https://www.youtube.com/html5
 # TODO: Add test to see what the browser supports by opening
 #       https://www.youtube.com/html5
-RUN apt -qqy update \
-  && apt -qqy --no-install-recommends install \
+RUN apt-get -qqy update \
+  && apt-get -qqy --no-install-recommends install \
     gstreamer1.0-libav \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 #========
 # ffmpeg
@@ -382,12 +383,12 @@ RUN apt -qqy update \
 # MP4Box (gpac) to clean the video credits to @taskworld @dtinth
 # ffmpeg (ffmpeg): Is a better alternative to Pyvnc2swf
 #   (use in Ubuntu >= 15) packages: ffmpeg
-RUN apt -qqy update \
-  && apt -qqy install \
+RUN apt-get -qqy update \
+  && apt-get -qqy install \
     ffmpeg \
     gpac \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 # ------------------------#
 # Sauce Connect Tunneling #
@@ -408,11 +409,11 @@ RUN apt -qqy update \
     # libasound2 \
     # libpulse-dev \
     # xul-ext-ubufox \
-RUN apt -qqy update \
-  && apt -qqy --no-install-recommends install \
+RUN apt-get -qqy update \
+  && apt-get -qqy --no-install-recommends install \
     `apt-cache depends firefox | awk '/Depends:/{print$2}'` \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean
+  && apt-get -qyy clean
 
 #===================================================
 # Run the following commands as non-privileged user
@@ -429,7 +430,7 @@ ENV FF_LANG="en-US" \
     FF_PLATFORM="linux-x86_64" \
     FF_INNER_PATH="firefox/releases"
 
-ARG FF_VER="76.0.1"
+ARG FF_VER="77.0.1"
 
 ENV FF_COMP="firefox-${FF_VER}.tar.bz2"
 ENV FF_URL="${FF_BASE_URL}/${FF_INNER_PATH}/${FF_VER}/${FF_PLATFORM}/${FF_LANG}/${FF_COMP}"
@@ -466,24 +467,24 @@ COPY bin/fail /usr/bin/
 #===============
 # TODO: Use Google fingerprint to verify downloads
 #  https://www.google.de/linuxrepositories/
-ARG EXPECTED_CHROME_VERSION="83.0.4103.61"
+ARG EXPECTED_CHROME_VERSION="83.0.4103.116"
 ENV CHROME_URL="https://dl.google.com/linux/direct" \
     CHROME_BASE_DEB_PATH="/home/seluser/chrome-deb/google-chrome" \
     GREP_ONLY_NUMS_VER="[0-9.]{2,20}"
 
 LABEL selenium_chrome_version "${EXPECTED_CHROME_VERSION}"
 
-RUN apt -qqy update \
+RUN apt-get -qqy update \
   && mkdir -p chrome-deb \
   && wget -nv "${CHROME_URL}/google-chrome-stable_current_amd64.deb" \
           -O "./chrome-deb/google-chrome-stable_current_amd64.deb" \
-  && apt -qyy --no-install-recommends install \
+  && apt-get -qyy --no-install-recommends install \
         "${CHROME_BASE_DEB_PATH}-stable_current_amd64.deb" \
   && rm "${CHROME_BASE_DEB_PATH}-stable_current_amd64.deb" \
   && rm -rf ./chrome-deb \
-  && apt -qyy autoremove \
+  && apt-get -qyy autoremove \
   && rm -rf /var/lib/apt/lists/* \
-  && apt -qyy clean \
+  && apt-get -qyy clean \
   && export CH_STABLE_VER=$(/usr/bin/google-chrome-stable --version | grep -iEo "${GREP_ONLY_NUMS_VER}") \
   && echo "CH_STABLE_VER:'${CH_STABLE_VER}' vs EXPECTED_CHROME_VERSION:'${EXPECTED_CHROME_VERSION}'" \
   && [ "${CH_STABLE_VER}" = "${EXPECTED_CHROME_VERSION}" ] || fail
