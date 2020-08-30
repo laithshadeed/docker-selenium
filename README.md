@@ -1,6 +1,8 @@
-<img id="header" width="760" src="./images/icons/logo_wide.jpg" />
+<img id="header" width="700" src="./images/icons/logo_wide.jpg" />
 
 # Selenium in Docker with Chrome and Firefox
+
+This project is [sponsored by GitAds](https://tracking.gitads.io/?repo=docker-selenium)
 
 [![Build Status](https://travis-ci.org/elgalu/docker-selenium.svg?branch=master)](https://travis-ci.org/elgalu/docker-selenium "Travis CI")
 [![Docker Pulls](https://img.shields.io/docker/pulls/elgalu/selenium.svg)](https://hub.docker.com/r/elgalu/selenium/tags/)
